@@ -9,7 +9,7 @@ export async function POST(req) {
       );
     }
 
-    //Get an access token
+    //Get an access token from root org.
     const tokenResponse = await fetch(
       process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL,
       {
@@ -36,7 +36,7 @@ export async function POST(req) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData?.access_token;
 
-    //Check if Organization Exists
+    //Check if Organization exists
     const checkOrgResponse = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/api/server/v1/organizations/check-name`,
       {
@@ -83,7 +83,7 @@ export async function POST(req) {
       orgId = checkOrgData?.data?.id;
     }
 
-    //Get Access Token for the Organization
+    //Get Access Token for the organization
     const orgTokenResponse = await fetch(
       process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL,
       {
@@ -109,7 +109,7 @@ export async function POST(req) {
     const orgTokenData = await orgTokenResponse.json();
     const orgAccessToken = orgTokenData?.access_token;
 
-    // Create User in Organization
+    // Create user in organization
     const userResponse = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/Users`,
       {
@@ -140,6 +140,7 @@ export async function POST(req) {
 
     const userId = userData?.id;
 
+    // Get Application ID
     const getAppResponse = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${
         process.env.NEXT_PUBLIC_APP_NAME}`,
@@ -160,6 +161,7 @@ export async function POST(req) {
 
     console.log("appId", appId);
 
+    // Get Role ID
     const getRolesResponse = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${
         process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,

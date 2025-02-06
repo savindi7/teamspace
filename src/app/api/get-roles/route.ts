@@ -1,23 +1,10 @@
+import { Session } from "@auth/core/types";
+import { auth } from "@/app/auth";
+
 export async function GET() {
+    const session: Session  = await auth();
+
     try {
-      // Get an access token
-      const tokenResponse = await fetch(process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "client_credentials",
-          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID,
-          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET,
-          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE,
-        }).toString(),
-      });
-  
-      if (!tokenResponse.ok) {
-        throw new Error("Failed to get access token");
-      }
-  
-      const tokenData = await tokenResponse.json();
-      const accessToken = tokenData.access_token;
   
       // Fetch roles
       const getRolesResponse = await fetch(
@@ -25,7 +12,7 @@ export async function GET() {
         {
           method: "GET",
           headers: {
-            Authorization: `Bearer ${accessToken}`,
+            Authorization: `Bearer ${session?.user?.accessToken}`,
             "Content-Type": "application/json",
           },
         }

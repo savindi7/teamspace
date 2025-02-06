@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { handleSignIn, handleSignOut } from "../lib/serverActions";
+import { handleSignIn, handleSignOut } from "@/lib/serverActions";
 import SignUp from "./SignUp";
 import OrganizationSwitch from "./OrganizationSwitch";
 import InviteUser from "./InviteUser";
@@ -20,9 +20,7 @@ export default function Home({ session }) {
             </button>
           </form>
 
-          <form
-            action={() => setShowSignUp(!showSignUp) }
-          >
+          <form action={() => setShowSignUp(!showSignUp)}>
             <button className="button secondary">
               {showSignUp ? "Close Sign Up" : "Sign Up"}
             </button>
@@ -33,10 +31,9 @@ export default function Home({ session }) {
       ) : (
         <div className="mt-3">
           <p>Hello {session?.user?.email}</p>
-          <p>You are now signed in to organization: {session?.orgName}</p>
+          <p>You are now signed in to Team: {session?.orgName}</p>
           <OrganizationSwitch />
           <InviteUser />
-
           <form action={handleSignOut}>
             <button className="button" type="submit">
               Sign Out

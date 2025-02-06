@@ -27,18 +27,18 @@ export default function OrganizationSwitch() {
     }
   }, [status, session]);
 
-const handleOrgSwitch = async (orgId: string, session: Session) => {
+  const handleOrgSwitch = async (orgId: string, session: Session) => {
     if (!orgId || !session?.user?.accessToken) return;
-  
+
     try {
       const response = await fetch("/api/switch-org", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ orgId, accessToken: session.user.accessToken }),
       });
-  
+
       const data = await response.json();
-  
+
       if (response.ok && data.accessToken) {
         window.location.reload();
       } else {
@@ -51,24 +51,27 @@ const handleOrgSwitch = async (orgId: string, session: Session) => {
 
   return (
     <div className="organization-switch-container">
-    { organizations.length > 0 &&  <>
-      <h3>Switch Team</h3>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {organizations.length > 0 && (
+        <>
+          <h3>Switch Team</h3>
+          {error && <p style={{ color: "red" }}>{error}</p>}
 
-      <div className="organization-grid">
-        {organizations.map((org) => (
-          <button
-            key={org.id}
-            className={`org-box ${selectedOrg === org.id ? "selected" : ""}`}
-            onClick={() => handleOrgSwitch(org.id, session)}
-            disabled={loading}
-          >
-            {org.name}
-          </button>
-        ))}
-      </div>
-
-      </>}
+          <div className="organization-grid">
+            {organizations.map((org) => (
+              <button
+                key={org.id}
+                className={`org-box ${
+                  selectedOrg === org.id ? "selected" : ""
+                }`}
+                onClick={() => handleOrgSwitch(org.id, session)}
+                disabled={loading}
+              >
+                {org.name}
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       {loading && <p>Switching organization...</p>}
     </div>
