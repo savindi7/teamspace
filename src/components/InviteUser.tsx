@@ -1,5 +1,14 @@
 import { FormEvent, useEffect, useState } from "react";
 import TeamMembers from "./TeamMembers";
+import {
+  Button,
+  CircularProgress,
+  Container,
+  MenuItem,
+  Select,
+  TextField,
+  Typography,
+} from "@mui/material";
 
 interface User {
   id: string;
@@ -82,37 +91,61 @@ const InviteUser = () => {
   };
 
   return (
-    <>
-      <form className="form" onSubmit={handleInvite}>
-        <input
+    <Container>
+      <form onSubmit={handleInvite}>
+        <TextField
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="User Email"
+          label="User Email"
+          fullWidth
+          margin="normal"
           required
         />
-        <input
+        <TextField
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          label="Password"
+          fullWidth
+          margin="normal"
           required
         />
-        <select value={role} onChange={(e) => setRole(e.target.value)} required>
-          <option value="">Select Role</option>
+        <Select
+          value={role}
+          onChange={(e) => setRole(e.target.value)}
+          displayEmpty
+          fullWidth
+          margin="normal"
+          required
+        >
+          <MenuItem value="">
+            <em>Select Role</em>
+          </MenuItem>
           {roles.map((role) => (
-            <option key={role.id} value={role.id}>
+            <MenuItem key={role.id} value={role.id}>
               {role.displayName}
-            </option>
+            </MenuItem>
           ))}
-        </select>
-        <button className="button secondary" type="submit" disabled={loading}>
-          {loading ? "Inviting..." : "Invite User"}
-        </button>
-        {message && <p>{message}</p>}
+        </Select>
+        <Button
+          variant="contained"
+          color="primary"
+          type="submit"
+          disabled={loading}
+          fullWidth
+          sx={{ mt: 2 }}
+        >
+          {loading ? <CircularProgress size={24} /> : "Invite User"}
+        </Button>
+        {message && (
+          <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+            {message}
+          </Typography>
+        )}
       </form>
       <TeamMembers users={users} />
-    </>
+    </Container>
   );
 };
 

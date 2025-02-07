@@ -1,4 +1,5 @@
 import React from 'react';
+import { List, ListItem, ListItemText, Typography } from '@mui/material';
 
 interface User {
     id: string;
@@ -13,14 +14,17 @@ interface TeamMembersProps {
 const TeamMembers: React.FC<TeamMembersProps> = ({ users }) => {
     return (
         <div>
-            <h3>Team Members</h3>
-            <ul>
+            <Typography variant="h6">Team Members</Typography>
+            <List>
                 {users.map((user) => (
-                    <li key={user.id}>
-                        {user.name?.givenName} ({user.emails?.[0] || "No Email"})
-                    </li>
+                    <ListItem key={user.id}>
+                        <ListItemText
+                            primary={user.name?.givenName}
+                            secondary={user.emails?.[0] || "No Email"}
+                        />
+                    </ListItem>
                 ))}
-            </ul>
+            </List>
         </div>
     );
 };
