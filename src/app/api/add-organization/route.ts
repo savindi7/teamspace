@@ -178,7 +178,8 @@ export async function POST(req) {
 
     // Get Application ID
     const getAppResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${
+        process.env.NEXT_PUBLIC_APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -196,7 +197,8 @@ export async function POST(req) {
 
     // Get Role ID
     const getRolesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${
+        process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {
@@ -242,7 +244,7 @@ export async function POST(req) {
         }),
       }
     );
-
+console.log("assignRoleResponse:", assignRoleResponse);
     if (!assignRoleResponse.ok) {
       throw new Error(`HTTP error! Status: ${assignRoleResponse.status}`);
     }

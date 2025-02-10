@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { handleSignIn, handleSignOut } from "@/lib/serverActions";
 import SignUp from "./SignUp";
-import InviteUser from "./InviteUser";
 import {
   AppBar,
   Toolbar,
@@ -22,6 +21,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import Logout from "@mui/icons-material/Logout";
 import Teams from "./Teams";
+import Members from "./Members";
 
 export default function Home({ session }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -35,7 +35,7 @@ export default function Home({ session }) {
   };
 
   return (
-    <Container className="home" maxWidth="sm">
+    <Container className="home">
       <AppBar position="static">
         <Toolbar>
           <IconButton edge="start" color="inherit" aria-label="menu">
@@ -106,8 +106,7 @@ export default function Home({ session }) {
           <Typography variant="body1">
             You are now signed in to Team: {session?.orgName}
           </Typography>
-          <Teams />
-          <InviteUser />
+         { session?.isSubOrg ? <Members /> : <Teams /> }
         </Box>
       )}
     </Container>

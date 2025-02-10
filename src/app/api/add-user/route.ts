@@ -36,9 +36,6 @@ export async function POST(req: Request): Promise<Response> {
     }
 
     const userData = await userResponse.json();
-
-    console.log("User Data:", userData);
-    console.log("role id:", selectedRoleId);
     const userId = userData?.id;
 
     // Assign the selected role to the user

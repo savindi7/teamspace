@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     params.append("grant_type", "organization_switch");
     params.append("switching_organization", orgId);
     params.append("token", accessToken);
-    params.append("scope", process.env.NEXT_PUBLIC_AUTH_SCOPE || "");
+    params.append("scope", process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL}`,
