@@ -11,55 +11,77 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         params: {
           scope: process.env.AUTH_SCOPE,
         },
-        },
+      },
     }),
   ],
   callbacks: {
-    async jwt({ token, profile, account }) {
+    async jwt({ token, profile, account, trigger, session }) {
+      if (profile) {
+        token.email = profile?.username;
+      }
 
-        if (profile) {
-            // token.idToken = account?.id_token || ""; // Ensure idToken is stored
-            token.email = profile?.username
-            // token.username = profile?.username || profile?.email || ""; // Assign a username safely
-          }
-          if (account) {
-            console.log("account", account)
-            token.accessToken = account?.access_token;
-            token.id_token = account?.id_token;        
-          }
+      if (account) {
+        token.accessToken = account?.access_token;
+        token.id_token = account?.id_token;
+      }
 
-          return token;
+      if (trigger === "update") {
+        console.log("Updating JWT with new session data");
+
+        if (session?.user?.accessToken) {
+          token.accessToken = session.user.accessToken;
+        }
+
+        if (session?.id_token) {
+          token.id_token = session.id_token;
+        }
+      }
+
+      return token;
     },
     async session({ session, token }) {
+      if (token?.accessToken) {
+        session.user = session.user || {};
+        session.user.accessToken = token.accessToken;
+        session.id_token = token.id_token || null;
+        session.orgName = session.id_token
+          ? getOrgName(session.id_token)
+          : null;
+        session.rootOrgName = getRootOrgName();
+        session.isSubOrg = isSubOrg(session);
+      }
 
-        if (token?.accessToken) {
-          session.user = session.user || {};
-          session.user.accessToken = token.accessToken;
-        //   session.user.username = token.username || "Unknown User";
-          session.id_token = token.id_token || null;
-          session.orgName = session.id_token ? getOrgName(session.id_token) : null;
-        }
       return session;
     },
   },
+  debug: true,
   secret: process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
 });
 
 export function parseJwt(token) {
-
-    const buffestString = Buffer.from(token.toString().split(".")[1], "base64");
-
-    return JSON.parse(buffestString.toString());
+  const buffestString = Buffer.from(token.toString().split(".")[1], "base64");
+  return JSON.parse(buffestString.toString());
 }
 
 export function getOrgName(token) {
+  if (parseJwt(token)["org_name"]) {
+    return parseJwt(token)["org_name"];
+  }
+  return process.env.SUB_ORGANIZATION_NAME;
+}
 
-    if (parseJwt(token)["org_name"]) {
-        console.log(parseJwt(token)["org_name"]);
+export function getRootOrgName() {
+  const baseUrl = process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL;
+  if (!baseUrl) {
+    throw new Error("Base URL is not defined");
+  }
+  const parts = baseUrl.split("/");
+  return parts[parts.length - 1];
+}
 
-        return parseJwt(token)["org_name"];
-    }
-
-    return process.env.SUB_ORGANIZATION_NAME;
+export function isSubOrg(session) {
+  const currentOrgName = getOrgName(session.id_token);
+  const rootOrgName = getRootOrgName();
+  return !(currentOrgName === rootOrgName);
 }

@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { handleSignIn, handleSignOut } from "@/lib/serverActions";
 import SignUp from "./SignUp";
-import OrganizationSwitch from "./OrganizationSwitch";
 import InviteUser from "./InviteUser";
 import {
   AppBar,
@@ -22,9 +21,9 @@ import {
 import MenuIcon from "@mui/icons-material/Menu";
 import AccountCircle from "@mui/icons-material/AccountCircle";
 import Logout from "@mui/icons-material/Logout";
+import Teams from "./Teams";
 
 export default function Home({ session }) {
-  const [showSignUp, setShowSignUp] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleMenu = (event) => {
@@ -97,18 +96,9 @@ export default function Home({ session }) {
               Sign in
             </Button>
           </form>
-
           <Box mt={2}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={() => setShowSignUp(!showSignUp)}
-            >
-              {showSignUp ? "Close Sign Up" : "Sign Up"}
-            </Button>
+          <SignUp />
           </Box>
-
-          {showSignUp && <SignUp />}
         </Box>
       ) : (
         <Box mt={3} textAlign="center">
@@ -116,7 +106,7 @@ export default function Home({ session }) {
           <Typography variant="body1">
             You are now signed in to Team: {session?.orgName}
           </Typography>
-          <OrganizationSwitch />
+          <Teams />
           <InviteUser />
         </Box>
       )}

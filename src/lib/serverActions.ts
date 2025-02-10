@@ -1,9 +1,8 @@
 "use server";
 
-import { signIn, signOut } from "../app/auth"; // Adjust the path if needed
+import { signIn, signOut } from "@/app/auth";
 
 export async function handleSignIn() {
-    console.log("hitt")
   await signIn("asgardeo");
 }
 

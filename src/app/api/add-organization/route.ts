@@ -1,17 +1,22 @@
-export async function POST(req) {
-  try {
-    const { email, password, organization } = await req.json();
+import { Session } from "@auth/core/types";
+import { auth } from "@/app/auth";
 
-    if (!email || !password || !organization) {
+export async function POST(req) {
+  const session: Session = await auth();
+
+  try {
+    const { teamName, teamDescription } = await req.json();
+
+    if (!teamName) {
       return Response.json(
         { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    //Get an access token from root org.
+    //Get an access token with cc grant type from root org.
     const tokenResponse = await fetch(
-      process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL}`,
       {
         method: "POST",
         headers: {
@@ -21,7 +26,7 @@ export async function POST(req) {
           grant_type: "client_credentials",
           client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID,
           client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET,
-          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE,
+          scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE,
         }).toString(),
       }
     );
@@ -36,7 +41,7 @@ export async function POST(req) {
     const tokenData = await tokenResponse.json();
     const accessToken = tokenData?.access_token;
 
-    //Check if Organization exists
+    // Check if Organization exists.
     const checkOrgResponse = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/api/server/v1/organizations/check-name`,
       {
@@ -45,7 +50,7 @@ export async function POST(req) {
           Authorization: `Bearer ${accessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ name: organization }),
+        body: JSON.stringify({ name: teamName }),
       }
     );
 
@@ -56,6 +61,26 @@ export async function POST(req) {
     }
 
     const checkOrgData = await checkOrgResponse.json();
+
+    // Get user ID from Asgardeo 'me' endpoint
+    const userResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/scim2/Me`,
+      {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${session?.user?.accessToken}`,
+          accept: "application/scim+json",
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (!userResponse.ok) {
+      throw new Error(`Error fetching user info: ${userResponse.statusText}`);
+    }
+
+    const userData = await userResponse.json();
+    const userId = userData?.id;
 
     let orgId;
 
@@ -69,7 +94,20 @@ export async function POST(req) {
             Authorization: `Bearer ${accessToken}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ name: organization }),
+          body: JSON.stringify({
+            name: teamName,
+            description: teamDescription,
+            attributes: [
+              {
+                key: "creator.id",
+                value: userId,
+              },
+              {
+                key: "creator.username",
+                value: session?.user?.email,
+              },
+            ],
+          }),
         }
       );
 
@@ -83,20 +121,26 @@ export async function POST(req) {
       orgId = checkOrgData?.data?.id;
     }
 
-    //Get Access Token for the organization
+    // switch token
+    const authHeader = Buffer.from(
+      `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID}:${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET}`
+    ).toString("base64");
+
+    const params = new URLSearchParams();
+    params.append("grant_type", "organization_switch");
+    params.append("switching_organization", orgId);
+    params.append("token", accessToken);
+    params.append("scope", `${process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE}`);
+
     const orgTokenResponse = await fetch(
-      process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL}/oauth2/token`,
       {
         method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          grant_type: "organization_switch",
-          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID,
-          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET,
-          token: accessToken,
-          switching_organization: orgId,
-          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE,
-        }).toString(),
+        headers: {
+          Authorization: `Basic ${authHeader}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: params.toString(),
       }
     );
 
@@ -109,41 +153,32 @@ export async function POST(req) {
     const orgTokenData = await orgTokenResponse.json();
     const orgAccessToken = orgTokenData?.access_token;
 
-    // Create user in organization
-    const userResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/Users`,
+    //Get the shadow account's user id
+    const getShadowAccountResponse = await fetch(
+      `${
+        process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL
+      }/o/scim2/Users?filter=userName%20eq%20${encodeURIComponent(
+        session?.user?.email
+      )}`,
       {
-        method: "POST",
+        method: "GET",
         headers: {
           Authorization: `Bearer ${orgAccessToken}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          emails: [{ primary: true, value: email }],
-          name: { familyName: "LastName", givenName: "FirstName" },
-          password: password,
-          userName: `DEFAULT/${email}`,
-        }),
       }
     );
 
-    console.log("User Creation Response:", userResponse);
-
-    if (!userResponse.ok) {
-      const errorText = await userResponse.text();
-      throw new Error(`User creation failed: ${errorText}`);
+    if (!getShadowAccountResponse.ok) {
+      throw new Error(`HTTP error! Status: ${getShadowAccountResponse.status}`);
     }
 
-    const userData = await userResponse.json();
-
-    console.log("User Creation Response data:", userData);
-
-    const userId = userData?.id;
+    const shadowAccountData = await getShadowAccountResponse.json();
+    const shadowAccountId = shadowAccountData?.Resources[0]?.id;
 
     // Get Application ID
     const getAppResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${
-        process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -159,12 +194,9 @@ export async function POST(req) {
     const data = await getAppResponse.json();
     const appId = data?.applications[0]?.id;
 
-    console.log("appId", appId);
-
     // Get Role ID
     const getRolesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${
-        process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {
@@ -180,15 +212,11 @@ export async function POST(req) {
 
     const rolesData = await getRolesResponse.json();
 
-    console.log("rolesData", rolesData);
-
     if (!rolesData?.Resources || rolesData.Resources.length === 0) {
       throw new Error("Role not found");
     }
 
     const roleId = rolesData?.Resources[0]?.id;
-
-    console.log("roleId", roleId);
 
     // Assign Role to User
     const assignRoleResponse = await fetch(
@@ -206,7 +234,7 @@ export async function POST(req) {
               path: "users",
               value: [
                 {
-                  value: userId,
+                  value: shadowAccountId,
                 },
               ],
             },
@@ -222,13 +250,13 @@ export async function POST(req) {
     const assignRoleData = await assignRoleResponse.json();
 
     return Response.json(
-      { message: "User registered successfully!", data: assignRoleData },
+      { message: "Team created successfully!", data: assignRoleData },
       { status: 200 }
     );
   } catch (error) {
-    console.error("Signup Error:", error?.response?.data || error.message);
+
     return Response.json(
-      { error: error.response?.data?.error || "Signup failed" },
+      { error: error.response?.data?.error || "Adding Team failed" },
       { status: error.response?.status || 500 }
     );
   }

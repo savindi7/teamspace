@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
+import { Session } from "@auth/core/types";
+import { auth } from "@/app/auth";
 
 export async function POST(req: Request) {
-  try {
-    const { orgId, accessToken } = await req.json();
+  const session: Session | null = await auth();
 
-    if (!orgId || !accessToken) {
+  try {
+    const { orgId } = await req.json();
+
+    if (!orgId) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
+
+    const accessToken = session?.user?.accessToken;
 
     const authHeader = Buffer.from(
       `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID}:${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET}`
@@ -19,7 +25,7 @@ export async function POST(req: Request) {
     params.append("scope", process.env.NEXT_PUBLIC_AUTH_SCOPE || "");
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL}/oauth2/token`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL}`,
       {
         method: "POST",
         headers: {
@@ -36,8 +42,9 @@ export async function POST(req: Request) {
 
     const data = await response.json();
 
-    if (data.access_token) {
-      return NextResponse.json({ accessToken: data.access_token });
+    if (data.access_token && data.id_token) {
+
+      return NextResponse.json({ accessToken: data.access_token, id_token: data.id_token });
     }
 
     return NextResponse.json({ error: "Invalid response from server" }, { status: 500 });
