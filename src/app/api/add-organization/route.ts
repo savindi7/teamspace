@@ -244,7 +244,7 @@ export async function POST(req) {
         }),
       }
     );
-console.log("assignRoleResponse:", assignRoleResponse);
+
     if (!assignRoleResponse.ok) {
       throw new Error(`HTTP error! Status: ${assignRoleResponse.status}`);
     }

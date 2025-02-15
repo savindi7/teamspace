@@ -36,7 +36,7 @@ const MemberList: React.FC = () => {
                 {users?.map((user) => (
                     <ListItem key={user.id}>
                         <ListItemText
-                            primary={user.userName}
+                            primary={user.userName.split("/").pop()}
                             secondary={user.roles[0]?.display}
                         />
                     </ListItem>

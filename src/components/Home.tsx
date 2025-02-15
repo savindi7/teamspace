@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { handleSignIn, handleSignOut } from "@/lib/serverActions";
 import SignUp from "./SignUp";
 import {
   AppBar,
@@ -22,6 +21,7 @@ import AccountCircle from "@mui/icons-material/AccountCircle";
 import Logout from "@mui/icons-material/Logout";
 import Teams from "./Teams";
 import Members from "./Members";
+import { signIn, signOut } from "next-auth/react";
 
 export default function Home({ session }) {
   const [anchorEl, setAnchorEl] = useState(null);
@@ -32,6 +32,25 @@ export default function Home({ session }) {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleSignOut = async () => {
+    try {
+      const res = await fetch("/api/auth/sign-out", {
+        method: "POST",
+      });
+      const data = await res.json();
+
+      if (data.logoutUrl) {
+        await signOut({ redirect: false });
+
+        window.location.href = data.logoutUrl;
+      } else {
+        console.error("Logout URL not found.");
+      }
+    } catch (error) {
+      console.error("Error during sign out:", error);
+    }
   };
 
   return (
@@ -54,7 +73,10 @@ export default function Home({ session }) {
                 onClick={handleMenu}
                 color="inherit"
               >
-                <Avatar alt={session.user.email} src="/static/images/avatar/1.jpg" />
+                <Avatar
+                  alt={session.user.email}
+                  src="/static/images/avatar/1.jpg"
+                />
               </IconButton>
               <Menu
                 id="menu-appbar"
@@ -78,7 +100,7 @@ export default function Home({ session }) {
                   Profile
                 </MenuItem>
                 <Divider />
-                <MenuItem onClick={handleSignOut}>
+                <MenuItem onClick={() => handleSignOut()}>
                   <ListItemIcon>
                     <Logout fontSize="small" />
                   </ListItemIcon>
@@ -91,13 +113,16 @@ export default function Home({ session }) {
       </AppBar>
       {!session ? (
         <Box mt={3} textAlign="center">
-          <form action={handleSignIn}>
-            <Button variant="contained" color="primary" type="submit">
-              Sign in
-            </Button>
-          </form>
+          <Button
+            variant="contained"
+            color="primary"
+            type="submit"
+            onClick={() => signIn("asgardeo")}
+          >
+            Sign in
+          </Button>
           <Box mt={2}>
-          <SignUp />
+            <SignUp />
           </Box>
         </Box>
       ) : (
@@ -106,7 +131,7 @@ export default function Home({ session }) {
           <Typography variant="body1">
             You are now signed in to Team: {session?.orgName}
           </Typography>
-         { session?.isSubOrg ? <Members /> : <Teams /> }
+          {session?.isSubOrg ? <Members /> : <Teams />}
         </Box>
       )}
     </Container>

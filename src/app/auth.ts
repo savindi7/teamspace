@@ -6,7 +6,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     Asgardeo({
       clientId: process.env.AUTH_ASGARDEO_ID,
       clientSecret: process.env.AUTH_ASGARDEO_SECRET,
-      issuer: `https://api.asgardeo.io/t/savindi/oauth2/token`,
+      issuer: process.env.AUTH_ASGARDEO_ISSUER,
       authorization: {
         params: {
           scope: process.env.AUTH_SCOPE,
@@ -41,6 +41,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (token?.accessToken) {
+        session.scopes = parseJwt(token.accessToken).scope || null;
         session.user = session.user || {};
         session.user.accessToken = token.accessToken;
         session.id_token = token.id_token || null;
