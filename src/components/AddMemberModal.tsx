@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from "react";
 import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Select, MenuItem, Typography, CircularProgress } from "@mui/material";
+import { Add } from "@mui/icons-material";
 
 const AddMemberModal = () => {
     const [open, setOpen] = useState(false);
@@ -56,7 +57,7 @@ const AddMemberModal = () => {
 
     return (
         <div>
-            <Button variant="contained" color="primary" onClick={handleOpen}>
+            <Button variant="contained" color="primary" onClick={handleOpen} startIcon={<Add />}>
                 Invite Member
             </Button>
             <Dialog open={open} onClose={handleClose}>

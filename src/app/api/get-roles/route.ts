@@ -2,7 +2,7 @@ import { Session } from "@auth/core/types";
 import { auth } from "@/app/auth";
 
 export async function GET() {
-  const session: Session = await auth();
+  const session: Session | null = await auth();
 
   try {
     // Get Application ID
@@ -11,7 +11,7 @@ export async function GET() {
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
+          Authorization: `Bearer ${session?.user?.access_token}`,
         },
       }
     );
@@ -29,7 +29,7 @@ export async function GET() {
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
+          Authorization: `Bearer ${session?.user?.access_token}`,
           "Content-Type": "application/json",
         },
       }

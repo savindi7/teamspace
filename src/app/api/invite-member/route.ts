@@ -19,7 +19,7 @@ export async function POST(req: Request): Promise<Response> {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
+          Authorization: `Bearer ${session?.user?.access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({

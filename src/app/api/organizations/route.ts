@@ -2,9 +2,9 @@ import { auth } from "@/app/auth";
 import { Session } from "@auth/core/types";
 
 export async function GET() {
-    const session: Session  = await auth();
+    const session: Session | null  = await auth();
 
-  if (!session || !session?.user || !session?.user?.accessToken) {
+  if (!session || !session?.user || !session?.user?.access_token) {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
@@ -12,7 +12,7 @@ export async function GET() {
 
   const response = await fetch(apiUrl, {
     headers: {
-      Authorization: `Bearer ${session?.user?.accessToken}`,
+      Authorization: `Bearer ${session?.user?.access_token}`,
     },
   });
 

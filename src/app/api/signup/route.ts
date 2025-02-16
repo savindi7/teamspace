@@ -1,4 +1,4 @@
-export async function POST(req) {
+export async function POST(req: Request) {
   try {
     const { email, password, firstName, lastName } = await req.json();
 
@@ -11,7 +11,7 @@ export async function POST(req) {
 
     //Get an access token from root org.
     const tokenResponse = await fetch(
-      process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL,
+      process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL!,
       {
         method: "POST",
         headers: {
@@ -19,9 +19,9 @@ export async function POST(req) {
         },
         body: new URLSearchParams({
           grant_type: "client_credentials",
-          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID,
-          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET,
-          scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE,
+          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID!,
+          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET!,
+          scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE!,
         }).toString(),
       }
     );
@@ -60,13 +60,11 @@ export async function POST(req) {
     }
 
     const userData = await userResponse.json();
-
     const userId = userData?.id;
 
     // Get Application ID
     const getAppResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/api/server/v1/applications?filter=name%20eq%20${
-        process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -84,8 +82,7 @@ export async function POST(req) {
 
     // Get Role ID
     const getRolesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/scim2/v2/Roles?filter=displayName%20eq%20${
-        process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/scim2/v2/Roles?filter=displayName%20eq%20${process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {
@@ -142,23 +139,26 @@ export async function POST(req) {
       { message: "User registered successfully!", data: assignRoleData },
       { status: 200 }
     );
-  } catch (error) {
-
+  } catch (error: unknown) {
     let errorMessage = "Signup failed";
 
-    const match = error?.message?.match(/\{.*\}/);
-    if (match) {
+    if (error instanceof Error) {
+      const match = error.message.match(/\{.*\}/);
+      if (match) {
         try {
-            const errorJson = JSON.parse(match[0]);
-            errorMessage = errorJson.detail || errorMessage;
-        } catch (parseError) {
-            console.error("Error parsing error message:", parseError);
+          const errorJson = JSON.parse(match[0]) as { detail?: string };
+          errorMessage = errorJson.detail || errorMessage;
+        } catch (parseError: unknown) {
+          console.error(
+            "Error parsing error message:",
+            parseError instanceof Error
+              ? parseError.message
+              : "Unknown parse error"
+          );
         }
+      }
     }
 
-    return Response.json(
-      { error: errorMessage },
-      { status: 500 }
-    );
+    return Response.json({ error: errorMessage }, { status: 500 });
   }
 }

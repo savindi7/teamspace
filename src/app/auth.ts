@@ -1,5 +1,6 @@
 import NextAuth from "next-auth";
 import Asgardeo from "next-auth/providers/asgardeo";
+import { Session } from "@auth/core/types";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -17,19 +18,17 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   callbacks: {
     async jwt({ token, profile, account, trigger, session }) {
       if (profile) {
-        token.email = profile?.username;
+        token.email = profile?.username as string;
       }
 
       if (account) {
-        token.accessToken = account?.access_token;
+        token.access_token = account?.access_token;
         token.id_token = account?.id_token;
       }
 
       if (trigger === "update") {
-        console.log("Updating JWT with new session data");
-
-        if (session?.user?.accessToken) {
-          token.accessToken = session.user.accessToken;
+        if (session?.user?.access_token) {
+          token.access_token = session.user.access_token;
         }
 
         if (session?.id_token) {
@@ -40,11 +39,13 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
-      if (token?.accessToken) {
-        session.scopes = parseJwt(token.accessToken).scope || null;
+      if (token?.access_token) {
+        session.scopes = parseJwt(token.access_token as string).scope || null;
+        session.rootOrgId =
+          parseJwt(token.access_token as string).user_org || null;
         session.user = session.user || {};
-        session.user.accessToken = token.accessToken;
-        session.id_token = token.id_token || null;
+        session.user.access_token = token.access_token as string;
+        session.id_token = token.id_token as string;
         session.orgName = session.id_token
           ? getOrgName(session.id_token)
           : null;
@@ -60,12 +61,12 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   session: { strategy: "jwt" },
 });
 
-export function parseJwt(token) {
+export function parseJwt(token: string) {
   const buffestString = Buffer.from(token.toString().split(".")[1], "base64");
   return JSON.parse(buffestString.toString());
 }
 
-export function getOrgName(token) {
+export function getOrgName(token: string) {
   if (parseJwt(token)["org_name"]) {
     return parseJwt(token)["org_name"];
   }
@@ -81,8 +82,8 @@ export function getRootOrgName() {
   return parts[parts.length - 1];
 }
 
-export function isSubOrg(session) {
-  const currentOrgName = getOrgName(session.id_token);
+export function isSubOrg(session: Session) {
+  const currentOrgName = getOrgName(session?.id_token as string);
   const rootOrgName = getRootOrgName();
   return !(currentOrgName === rootOrgName);
 }

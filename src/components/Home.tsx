@@ -1,32 +1,29 @@
 "use client";
 
+import type React from "react";
+
 import { useState } from "react";
 import SignUp from "./SignUp";
 import {
-  AppBar,
-  Toolbar,
-  IconButton,
   Typography,
   Button,
   Container,
   Box,
-  Avatar,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Divider,
+  CircularProgress,
+  Chip,
 } from "@mui/material";
-import MenuIcon from "@mui/icons-material/Menu";
-import AccountCircle from "@mui/icons-material/AccountCircle";
-import Logout from "@mui/icons-material/Logout";
 import Teams from "./Teams";
 import Members from "./Members";
-import { signIn, signOut } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { ArrowBack } from "@mui/icons-material";
+import Navbar from "./Navbar";
 
-export default function Home({ session }) {
-  const [anchorEl, setAnchorEl] = useState(null);
+export default function Home() {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const { data: session, update, status } = useSession();
+  const [loading, setLoading] = useState(false);
 
-  const handleMenu = (event) => {
+  const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
 
@@ -34,89 +31,85 @@ export default function Home({ session }) {
     setAnchorEl(null);
   };
 
-  const handleSignOut = async () => {
+  const handleOrgSwitch = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    if (!session?.rootOrgId) return;
+
+    const rootOrgId = session.rootOrgId;
+    setLoading(true);
     try {
-      const res = await fetch("/api/auth/sign-out", {
+      const response = await fetch("/api/switch-org", {
         method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Request-ID": Date.now().toString(),
+        },
+        body: JSON.stringify({
+          orgId: rootOrgId,
+          accessToken: session.user.access_token,
+        }),
       });
-      const data = await res.json();
 
-      if (data.logoutUrl) {
-        await signOut({ redirect: false });
+      const data = await response.json();
 
-        window.location.href = data.logoutUrl;
+      if (response.ok && data.accessToken) {
+        const updatedSession = {
+          ...session,
+          user: {
+            ...session.user,
+            access_token: data.accessToken,
+          },
+        };
+
+        if (data.id_token) {
+          updatedSession.id_token = data.id_token;
+        }
+
+        try {
+          await update(updatedSession);
+          window.location.reload();
+        } catch (updateError) {
+          console.error("Error updating session:", updateError);
+          throw updateError;
+        }
       } else {
-        console.error("Logout URL not found.");
+        throw new Error(data.error || "Failed to switch organization");
       }
     } catch (error) {
-      console.error("Error during sign out:", error);
+      console.error("Error in handleOrgSwitch:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
+  if (status === "loading") {
+    return (
+      <Container>
+        <Box
+          display="flex"
+          justifyContent="center"
+          alignItems="center"
+          minHeight="100vh"
+        >
+          <CircularProgress />
+        </Box>
+      </Container>
+    );
+  }
+
   return (
     <Container className="home">
-      <AppBar position="static">
-        <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="menu">
-            <MenuIcon />
-          </IconButton>
-          <Typography variant="h6" style={{ flexGrow: 1 }}>
-            Asgardeo x Next.js B2B Sample App
-          </Typography>
-          {session && (
-            <div>
-              <IconButton
-                edge="end"
-                aria-label="account of current user"
-                aria-controls="menu-appbar"
-                aria-haspopup="true"
-                onClick={handleMenu}
-                color="inherit"
-              >
-                <Avatar
-                  alt={session.user.email}
-                  src="/static/images/avatar/1.jpg"
-                />
-              </IconButton>
-              <Menu
-                id="menu-appbar"
-                anchorEl={anchorEl}
-                anchorOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                keepMounted
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-                open={Boolean(anchorEl)}
-                onClose={handleClose}
-              >
-                <MenuItem onClick={handleClose}>
-                  <ListItemIcon>
-                    <AccountCircle fontSize="small" />
-                  </ListItemIcon>
-                  Profile
-                </MenuItem>
-                <Divider />
-                <MenuItem onClick={() => handleSignOut()}>
-                  <ListItemIcon>
-                    <Logout fontSize="small" />
-                  </ListItemIcon>
-                  Sign Out
-                </MenuItem>
-              </Menu>
-            </div>
-          )}
-        </Toolbar>
-      </AppBar>
+      <Navbar
+        session={session}
+        handleMenu={handleMenu}
+        anchorEl={anchorEl}
+        handleClose={handleClose}
+      />
       {!session ? (
         <Box mt={3} textAlign="center">
           <Button
             variant="contained"
             color="primary"
-            type="submit"
             onClick={() => signIn("asgardeo")}
           >
             Sign in
@@ -126,12 +119,29 @@ export default function Home({ session }) {
           </Box>
         </Box>
       ) : (
-        <Box mt={3} textAlign="center">
-          <Typography variant="body1">Hello {session?.user?.email}</Typography>
-          <Typography variant="body1">
-            You are now signed in to Team: {session?.orgName}
-          </Typography>
-          {session?.isSubOrg ? <Members /> : <Teams />}
+        <Box margin={3}>
+          {session.isSubOrg && (
+            <Button
+              startIcon={<ArrowBack />}
+              onClick={handleOrgSwitch}
+              disabled={loading}
+              variant="text"
+              sx={{ mb: 2 }}
+            >
+              {loading ? <CircularProgress size={24} /> : "Back to Teams"}
+            </Button>
+          )}
+          <Box textAlign="center">
+            <Typography variant="body1" gutterBottom>
+              Hello {session.user.email} 👋
+            </Typography>
+            {session.isSubOrg && (
+              <Typography variant="body1" gutterBottom component="span">
+                You are now signed in to Team: <Chip label={session?.orgName} />
+              </Typography>
+            )}
+            {session.isSubOrg ? <Members /> : <Teams />}
+          </Box>
         </Box>
       )}
     </Container>

@@ -10,7 +10,7 @@ import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
 
 const AddTeamModal = () => {
-  const [isOpen, setIsOpen] = useState(open);
+  const [isOpen, setIsOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [teamDescription, setTeamDescription] = useState("");
 
@@ -22,27 +22,25 @@ const AddTeamModal = () => {
     setIsOpen(false);
   };
 
-const handleSave = async () => {
-
+  const handleSave = async () => {
     try {
-        const response = await fetch("/api/add-organization", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify({teamName, teamDescription}),
-        });
+      const response = await fetch("/api/add-organization", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ teamName, teamDescription }),
+      });
 
-        if (response.ok) {
-            console.log("Team added successfully");
-            handleClose();
-        } else {
-            console.error("Failed to add team");
-        }
+      if (response.ok) {
+        handleClose();
+      } else {
+        console.error("Failed to add team");
+      }
     } catch (error) {
-        console.error("Error adding team:", error);
+      console.error("Error adding team:", error);
     }
-};
+  };
 
   return (
     <>
@@ -54,7 +52,6 @@ const handleSave = async () => {
       >
         Add Team
       </Button>
-
       <Dialog open={isOpen} onClose={handleClose}>
         <DialogTitle>Add New Team</DialogTitle>
         <DialogContent>

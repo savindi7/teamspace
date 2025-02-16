@@ -7,7 +7,7 @@ const Teams: React.FC = () => {
 
     return (
         <Container>
-            <Typography variant="h4" gutterBottom>
+            <Typography variant="h4" margin={3}>
                 Teams
             </Typography>
             <AddTeamModal 

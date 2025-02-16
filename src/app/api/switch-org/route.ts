@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing parameters" }, { status: 400 });
     }
 
-    const accessToken = session?.user?.accessToken;
+    const accessToken = session?.user?.access_token;
 
     const authHeader = Buffer.from(
       `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID}:${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET}`
@@ -21,8 +21,8 @@ export async function POST(req: Request) {
     const params = new URLSearchParams();
     params.append("grant_type", "organization_switch");
     params.append("switching_organization", orgId);
-    params.append("token", accessToken);
-    params.append("scope", process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE);
+    params.append("token", accessToken!);
+    params.append("scope", process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE!);
 
     const response = await fetch(
       `${process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL}`,

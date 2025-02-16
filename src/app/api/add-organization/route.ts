@@ -1,8 +1,12 @@
 import { Session } from "@auth/core/types";
 import { auth } from "@/app/auth";
 
-export async function POST(req) {
-  const session: Session = await auth();
+export async function POST(req: Request) {
+  const session: Session | null = await auth();
+
+  if (!session) {
+    throw new Error("Authentication failed");
+  }
 
   try {
     const { teamName, teamDescription } = await req.json();
@@ -24,9 +28,9 @@ export async function POST(req) {
         },
         body: new URLSearchParams({
           grant_type: "client_credentials",
-          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID,
-          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET,
-          scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE,
+          client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID!,
+          client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET!,
+          scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE!,
         }).toString(),
       }
     );
@@ -68,7 +72,7 @@ export async function POST(req) {
       {
         method: "GET",
         headers: {
-          Authorization: `Bearer ${session?.user?.accessToken}`,
+          Authorization: `Bearer ${session?.user?.access_token}`,
           accept: "application/scim+json",
           "Content-Type": "application/json",
         },
@@ -158,7 +162,7 @@ export async function POST(req) {
       `${
         process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL
       }/o/scim2/Users?filter=userName%20eq%20${encodeURIComponent(
-        session?.user?.email
+        session?.user?.email ?? ""
       )}`,
       {
         method: "GET",
@@ -255,11 +259,17 @@ export async function POST(req) {
       { message: "Team created successfully!", data: assignRoleData },
       { status: 200 }
     );
-  } catch (error) {
-
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      return Response.json(
+        { error: error.message || "Adding Team failed" },
+        { status: 500 }
+      );
+    }
+  
     return Response.json(
-      { error: error.response?.data?.error || "Adding Team failed" },
-      { status: error.response?.status || 500 }
+      { error: "Adding Team failed" },
+      { status: 500 }
     );
   }
 }
