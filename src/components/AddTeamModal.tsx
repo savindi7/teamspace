@@ -9,10 +9,11 @@ import {
 import AddIcon from "@mui/icons-material/Add";
 import { useState } from "react";
 
-const AddTeamModal = () => {
+const AddTeamModal = ({ refreshTeams }: { refreshTeams: () => void }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [teamName, setTeamName] = useState("");
   const [teamDescription, setTeamDescription] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleOpen = () => {
     setIsOpen(true);
@@ -23,6 +24,7 @@ const AddTeamModal = () => {
   };
 
   const handleSave = async () => {
+    setLoading(true);
     try {
       const response = await fetch("/api/add-organization", {
         method: "POST",
@@ -34,11 +36,14 @@ const AddTeamModal = () => {
 
       if (response.ok) {
         handleClose();
+        refreshTeams()
       } else {
         console.error("Failed to add team");
       }
     } catch (error) {
       console.error("Error adding team:", error);
+    } finally {
+    setLoading(false);
     }
   };
 
@@ -78,7 +83,7 @@ const AddTeamModal = () => {
           <Button onClick={handleClose} color="primary">
             Cancel
           </Button>
-          <Button onClick={handleSave} color="primary">
+          <Button onClick={handleSave} color="primary" variant="contained" disabled={loading} loading={loading}>
             Save
           </Button>
         </DialogActions>

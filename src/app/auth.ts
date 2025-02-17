@@ -1,6 +1,11 @@
 import NextAuth from "next-auth";
 import Asgardeo from "next-auth/providers/asgardeo";
-import { Session } from "@auth/core/types";
+import {
+  introspectToken,
+  getCCGrantToken,
+  parseJwt,
+} from "@/app/auth-utils/tokenUtils";
+import { isSubOrg, getRootOrgName } from "@/app/auth-utils/orgUtils";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
@@ -40,17 +45,36 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     },
     async session({ session, token }) {
       if (token?.access_token) {
-        session.scopes = parseJwt(token.access_token as string).scope || null;
-        session.rootOrgId =
-          parseJwt(token.access_token as string).user_org || null;
         session.user = session.user || {};
         session.user.access_token = token.access_token as string;
         session.id_token = token.id_token as string;
         session.orgName = session.id_token
-          ? getOrgName(session.id_token)
+          ? parseJwt(session.id_token)["org_name"]
           : null;
         session.rootOrgName = getRootOrgName();
-        session.isSubOrg = isSubOrg(session);
+        session.rootOrgId = parseJwt(token.id_token as string)["user_org"];
+        session.isSubOrg = isSubOrg(session.orgName as string);
+
+        // Call OAuth2 introspection to get scopes
+        try {
+          const introspectionResponse = await introspectToken(
+            token?.access_token as string
+          );
+          session.scopes = introspectionResponse.scope || null;
+        } catch (error) {
+          console.error("Error in token introspection:", error);
+        }
+
+        // Get token from root org with client credentials grant type
+        try {
+          const ccGrantToken = await getCCGrantToken();
+          session.rootOrgToken = ccGrantToken.access_token;
+        } catch (error) {
+          console.error(
+            "Error in getting token with client credentials grant type:",
+            error
+          );
+        }
       }
 
       return session;
@@ -60,30 +84,3 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   secret: process.env.AUTH_SECRET,
   session: { strategy: "jwt" },
 });
-
-export function parseJwt(token: string) {
-  const buffestString = Buffer.from(token.toString().split(".")[1], "base64");
-  return JSON.parse(buffestString.toString());
-}
-
-export function getOrgName(token: string) {
-  if (parseJwt(token)["org_name"]) {
-    return parseJwt(token)["org_name"];
-  }
-  return process.env.SUB_ORGANIZATION_NAME;
-}
-
-export function getRootOrgName() {
-  const baseUrl = process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL;
-  if (!baseUrl) {
-    throw new Error("Base URL is not defined");
-  }
-  const parts = baseUrl.split("/");
-  return parts[parts.length - 1];
-}
-
-export function isSubOrg(session: Session) {
-  const currentOrgName = getOrgName(session?.id_token as string);
-  const rootOrgName = getRootOrgName();
-  return !(currentOrgName === rootOrgName);
-}

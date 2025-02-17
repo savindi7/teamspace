@@ -1,7 +1,7 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import {
   List,
   ListItem,
@@ -13,31 +13,27 @@ import {
 import { Organization } from "@/types/organization";
 import { TrendingFlat } from "@mui/icons-material";
 
-export default function TeamSwitch() {
-  const { data: session, status, update } = useSession();
-  const [organizations, setOrganizations] = useState<Organization[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+interface TeamSwitchProps {
+  organizations: Organization[];
+  refreshTeams: () => void;
+  orgsLoading?: boolean;
+}
 
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.access_token) {
-      fetch("/api/organizations")
-        .then((res) => res.json())
-        .then((data) => {
-          if (data.error) throw new Error(data.error);
-          setOrganizations(data.organizations || []);
-        })
-        .catch((err) => {
-          console.error("Error fetching organizations:", err);
-          setError("Failed to load organizations");
-        });
-    }
-  }, [status, session]);
+export default function TeamSwitch({
+  organizations,
+  refreshTeams,
+  orgsLoading,
+}: TeamSwitchProps) {
+  const { data: session, update } = useSession();
+  const [loadingOrgId, setLoadingOrgId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleOrgSwitch = async (orgId: string) => {
     if (!orgId || !session?.user?.access_token) return;
 
-    setLoading(true);
+    setLoadingOrgId(orgId);
+    setError(null);
+
     try {
       const response = await fetch("/api/switch-org", {
         method: "POST",
@@ -57,76 +53,63 @@ export default function TeamSwitch() {
             ...session.user,
             access_token: data.accessToken,
           },
+          id_token: data.id_token || session.id_token,
         };
 
-        if (data.id_token) {
-          updatedSession.id_token = data.id_token;
-        }
-
-        try {
-          await update(updatedSession);
-
-          setOrganizations((prev) => [...prev]);
-        } catch (updateError) {
-          console.error("Error updating session:", updateError);
-          throw updateError;
-        }
+        await update(updatedSession);
+        refreshTeams();
       } else {
         throw new Error(data.error || "Failed to switch organization");
       }
     } catch (error) {
-      console.error("Error in handleOrgSwitch:", error);
+      console.error("Error switching organization:", error);
       setError(
         typeof error === "string" ? error : "Failed to switch organization"
       );
     } finally {
-      setLoading(false);
+      setLoadingOrgId(null);
     }
-  };
-
-  const handleButtonClick = (orgId: string) => (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    handleOrgSwitch(orgId);
   };
 
   return (
     <div className="organization-switch-container">
-      {organizations.length > 0 && (
-        <>
-          {error && (
-            <Typography color="error" sx={{ mb: 2 }}>
-              {error}
-            </Typography>
-          )}
-
-          <List sx={{ marginTop: 5 }}>
-            {organizations.map((org) => (
-              <ListItem
-                key={org.id}
-                disableGutters
-                sx={{
-                  opacity: loading ? 0.7 : 1,
-                  pointerEvents: loading ? "none" : "auto",
-                }}
-              >
-                <ListItemText primary={org.name} />
-                <Button
-                  variant="outlined"
-                  color="primary"
-                  onClick={handleButtonClick(org.id)}
-                  disabled={loading}
-                  endIcon={<TrendingFlat />}
-                >
-                  {loading ? "Switching..." : "Switch"}
-                </Button>
-              </ListItem>
-            ))}
-          </List>
-        </>
+      {error && (
+        <Typography color="error" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
       )}
 
-      {loading && (
+      {organizations.length > 0 || orgsLoading ? (
+        <List sx={{ marginTop: 5 }}>
+          {organizations.map((org) => (
+            <ListItem
+              key={org.id}
+              disableGutters
+              sx={{
+                opacity: loadingOrgId === org.id ? 0.7 : 1,
+                pointerEvents: loadingOrgId === org.id ? "none" : "auto",
+              }}
+            >
+              <ListItemText primary={org.name} />
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => handleOrgSwitch(org.id)}
+                disabled={loadingOrgId === org.id}
+                endIcon={<TrendingFlat />}
+              >
+                {loadingOrgId === org.id ? "Switching..." : "Switch"}
+              </Button>
+            </ListItem>
+          ))}
+        </List>
+      ) : (
+        <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
+          No organizations available.
+        </Typography>
+      )}
+
+      {loadingOrgId && (
         <div
           style={{
             position: "fixed",

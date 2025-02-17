@@ -12,6 +12,7 @@ declare module "next-auth" {
     id_token?: string | null
     orgName?: string | null
     rootOrgName?: string
+    rootOrgToken?: string
     isSubOrg?: boolean
     rootOrgId?: string
   }
