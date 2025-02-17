@@ -8,7 +8,7 @@ export async function GET() {
     return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401 });
   }
 
-  const apiUrl = `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL}/o/api/users/v1/me/organizations`;
+  const apiUrl = `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/api/users/v1/me/organizations`;
 
   const response = await fetch(apiUrl, {
     headers: {

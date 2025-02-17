@@ -7,6 +7,8 @@ declare module "next-auth" {
       access_token?: string
       name?: string | null
       image?: string | null
+      firstName?: string
+      lastName?: string
     }
     scopes?: string[] | null
     id_token?: string | null

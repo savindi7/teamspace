@@ -15,7 +15,7 @@ export async function POST(req: Request): Promise<Response> {
 
     // Create user in the organization
     const userResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/Users`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/Users`,
       {
         method: "POST",
         headers: {
@@ -40,7 +40,7 @@ export async function POST(req: Request): Promise<Response> {
 
     // Assign the selected role to the user
     const assignRoleResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles/${selectedRoleId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/v2/Roles/${selectedRoleId}`,
       {
         method: "PATCH",
         headers: {

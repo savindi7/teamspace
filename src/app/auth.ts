@@ -10,12 +10,12 @@ import { isSubOrg, getRootOrgName } from "@/app/auth-utils/orgUtils";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Asgardeo({
-      clientId: process.env.AUTH_ASGARDEO_ID,
-      clientSecret: process.env.AUTH_ASGARDEO_SECRET,
-      issuer: process.env.AUTH_ASGARDEO_ISSUER,
+      clientId: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID,
+      clientSecret: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET,
+      issuer: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER,
       authorization: {
         params: {
-          scope: process.env.AUTH_SCOPE,
+          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE,
         },
       },
     }),
@@ -48,6 +48,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         session.user = session.user || {};
         session.user.access_token = token.access_token as string;
         session.id_token = token.id_token as string;
+        session.user.firstName = parseJwt(session.id_token)["given_name"];
+        session.user.lastName = parseJwt(session.id_token)["family_name"];
         session.orgName = session.id_token
           ? parseJwt(session.id_token)["org_name"]
           : null;
@@ -68,7 +70,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         // Get token from root org with client credentials grant type
         try {
           const ccGrantToken = await getCCGrantToken();
-          session.rootOrgToken = ccGrantToken.access_token;
+          session.rootOrgToken = ccGrantToken?.access_token;
         } catch (error) {
           console.error(
             "Error in getting token with client credentials grant type:",

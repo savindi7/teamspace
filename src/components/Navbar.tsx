@@ -11,6 +11,8 @@ import Logout from "@mui/icons-material/ExitToApp";
 import { signOut } from "next-auth/react";
 import { Session } from "@auth/core/types";
 import { Box } from "@mui/material";
+import ProfileModal from "./ProfileModal";
+import { PersonOutline } from "@mui/icons-material";
 
 interface NavbarProps {
   session: Session | null;
@@ -25,6 +27,12 @@ const Navbar: React.FC<NavbarProps> = ({
   anchorEl,
   handleClose,
 }) => {
+  const [isProfileModalOpen, setIsProfileModalOpen] = React.useState(false);
+
+  const handleProfileModal = () => {
+    setIsProfileModalOpen(true);
+  };
+
   const handleSignOut = async () => {
     try {
       const res = await fetch("/api/auth/sign-out", {
@@ -88,6 +96,12 @@ const Navbar: React.FC<NavbarProps> = ({
               open={Boolean(anchorEl)}
               onClose={handleClose}
             >
+              <MenuItem onClick={handleProfileModal}>
+                <ListItemIcon>
+                  <PersonOutline fontSize="small" />
+                </ListItemIcon>
+                Profile
+              </MenuItem>
               <MenuItem onClick={() => handleSignOut()}>
                 <ListItemIcon>
                   <Logout fontSize="small" />
@@ -98,6 +112,10 @@ const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
       </Toolbar>
+      <ProfileModal
+        open={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+      />
     </AppBar>
   );
 };

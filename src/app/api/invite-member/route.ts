@@ -15,7 +15,7 @@ export async function POST(req: Request): Promise<Response> {
 
     // Check if user exists
     const checkUserResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/scim2/Users?filter=emails eq "${email}"`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/Users?filter=emails eq "${email}"`,
       {
         method: "GET",
         headers: {
@@ -35,7 +35,7 @@ export async function POST(req: Request): Promise<Response> {
     if (!userExists) {
       // User does not exist, invite using Ask Password flow
       const inviteUserResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/scim2/Users`,
+        `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/Users`,
         {
           method: "POST",
           headers: {
@@ -63,7 +63,7 @@ export async function POST(req: Request): Promise<Response> {
     } else {
       // User already exists, proceed with normal invitation
        const inviteUserResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/guests/invite`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/api/server/v1/guests/invite`,
       {
         method: "POST",
         headers: {

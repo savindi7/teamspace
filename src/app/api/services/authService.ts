@@ -7,9 +7,9 @@ export async function switchOrganizationToken(accessToken: string, orgId: string
     params.append("grant_type", "organization_switch");
     params.append("switching_organization", orgId);
     params.append("token", accessToken);
-    params.append("scope", process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE!);
+    params.append("scope", process.env.NEXT_PUBLIC_AUTH_SCOPE!);
   
-    const response = await fetch(`${process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL}/oauth2/token`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/oauth2/token`, {
       method: "POST",
       headers: {
         Authorization: `Basic ${authHeader}`,

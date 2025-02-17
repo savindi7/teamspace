@@ -1,6 +1,6 @@
 export async function introspectToken(accessToken: string) {
-  const clientId = process.env.AUTH_ASGARDEO_ID;
-  const clientSecret = process.env.AUTH_ASGARDEO_SECRET;
+  const clientId = process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID;
+  const clientSecret = process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET;
 
   if (!clientId || !clientSecret) {
     throw new Error("Missing required environment variables for introspection");
@@ -11,7 +11,7 @@ export async function introspectToken(accessToken: string) {
   );
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL}/oauth2/introspect`,
+    `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/oauth2/introspect`,
     {
       method: "POST",
       headers: {
@@ -31,7 +31,7 @@ export async function introspectToken(accessToken: string) {
 
 export async function getCCGrantToken() {
   const tokenResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_ASGARDEO_TOKEN_URL}`,
+    `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER}`,
     {
       method: "POST",
       headers: {
@@ -39,12 +39,14 @@ export async function getCCGrantToken() {
       },
       body: new URLSearchParams({
         grant_type: "client_credentials",
-        client_id: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_ID!,
-        client_secret: process.env.NEXT_PUBLIC_ASGARDEO_CLIENT_SECRET!,
-        scope: process.env.NEXT_PUBLIC_CREATE_ADMIN_SCOPE!,
+        client_id: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID!,
+        client_secret: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET!,
+        scope: process.env.NEXT_PUBLIC_AUTH_SCOPE!,
       }).toString(),
     }
   );
+
+  console.log("tokenResponse", tokenResponse)
 
   if (!tokenResponse.ok) {
     const errorData = await tokenResponse.json();

@@ -11,7 +11,7 @@ export async function DELETE(req: Request) {
     }
 
     const deleteResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/Users/${userId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/Users/${userId}`,
       {
         method: "DELETE",
         headers: {

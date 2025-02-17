@@ -1,6 +1,6 @@
 export async function getAppId(accessToken: string): Promise<string> {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -19,7 +19,7 @@ export async function getAppId(accessToken: string): Promise<string> {
   
   export async function getRoleId(accessToken: string, appId: string): Promise<string> {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME_ENCODED}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {
@@ -39,7 +39,7 @@ export async function getAppId(accessToken: string): Promise<string> {
   
   export async function assignRole(accessToken: string, roleId: string, userId: string) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_ORG_URL}/o/scim2/v2/Roles/${roleId}`,
+      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/v2/Roles/${roleId}`,
       {
         method: "PATCH",
         headers: {

@@ -1,5 +1,5 @@
 export function getRootOrgName() {
-  const baseUrl = process.env.NEXT_PUBLIC_ASGARDEO_BASE_ORGANIZATION_URL;
+  const baseUrl = process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL;
   if (!baseUrl) {
     throw new Error("Base URL is not defined");
   }
