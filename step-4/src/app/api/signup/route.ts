@@ -1,9 +1,6 @@
-import { auth } from "@/app/auth";
-import { Session } from "@auth/core/types";
+import { getCCGrantToken } from "@/app/auth-utils/tokenUtils";
 
 export async function POST(req: Request) {
-  const session: Session | null  = await auth();
-
   try {
     const { email, password, firstName, lastName } = await req.json();
 
@@ -14,7 +11,24 @@ export async function POST(req: Request) {
       );
     }
 
-    const accessToken = session?.rootOrgToken;
+    let accessToken: string | undefined;
+
+    try {
+      const ccGrantToken = await getCCGrantToken();
+      accessToken = ccGrantToken?.access_token;
+    } catch (error) {
+      console.error(
+        "Error in getting token with client credentials grant type:",
+        error
+      );
+    }
+
+    if (!accessToken) {
+      return Response.json(
+        { error: "Failed to obtain access token" },
+        { status: 500 }
+      );
+    }
 
     // Create user in root organization
     const userResponse = await fetch(
