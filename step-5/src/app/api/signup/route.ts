@@ -1,4 +1,9 @@
+import { auth } from "@/app/auth";
+import { Session } from "@auth/core/types";
+
 export async function POST(req: Request) {
+  const session: Session | null  = await auth();
+
   try {
     const { email, password, firstName, lastName } = await req.json();
 
@@ -9,32 +14,7 @@ export async function POST(req: Request) {
       );
     }
 
-    //Get an access token from root org.
-    const tokenResponse = await fetch(
-      process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER!,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
-        body: new URLSearchParams({
-          grant_type: "client_credentials",
-          client_id: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID!,
-          client_secret: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER!,
-          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE!,
-        }).toString(),
-      }
-    );
-
-    if (!tokenResponse.ok) {
-      const errorData = await tokenResponse.json();
-      throw new Error(
-        errorData?.error || `HTTP error! status: ${tokenResponse?.status}`
-      );
-    }
-
-    const tokenData = await tokenResponse.json();
-    const accessToken = tokenData?.access_token;
+    const accessToken = session?.rootOrgToken;
 
     // Create user in root organization
     const userResponse = await fetch(

@@ -46,8 +46,6 @@ export async function getCCGrantToken() {
     }
   );
 
-  console.log("tokenResponse", tokenResponse)
-
   if (!tokenResponse.ok) {
     const errorData = await tokenResponse.json();
     throw new Error(
