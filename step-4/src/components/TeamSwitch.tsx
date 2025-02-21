@@ -14,24 +14,24 @@ import { Organization } from "@/types/organization";
 import { TrendingFlat } from "@mui/icons-material";
 
 interface TeamSwitchProps {
-  organizations: Organization[];
+  teams: Organization[];
   refreshTeams: () => void;
-  orgsLoading?: boolean;
+  teamsLoading?: boolean;
 }
 
 export default function TeamSwitch({
-  organizations,
+  teams,
   refreshTeams,
-  orgsLoading,
+  teamsLoading,
 }: TeamSwitchProps) {
   const { data: session, update } = useSession();
-  const [loadingOrgId, setLoadingOrgId] = useState<string | null>(null);
+  const [loadingTeamId, setLoadingTeamId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleOrgSwitch = async (orgId: string) => {
+  const handleTeamSwitch = async (orgId: string) => {
     if (!orgId || !session?.user?.access_token) return;
 
-    setLoadingOrgId(orgId);
+    setLoadingTeamId(orgId);
     setError(null);
 
     try {
@@ -59,57 +59,57 @@ export default function TeamSwitch({
         await update(updatedSession);
         refreshTeams();
       } else {
-        throw new Error(data.error || "Failed to switch organization");
+        throw new Error(data.error || "Failed to switch team");
       }
     } catch (error) {
-      console.error("Error switching organization:", error);
+      console.error("Error switching team:", error);
       setError(
-        typeof error === "string" ? error : "Failed to switch organization"
+        typeof error === "string" ? error : "Failed to switch team"
       );
     } finally {
-      setLoadingOrgId(null);
+      setLoadingTeamId(null);
     }
   };
 
   return (
-    <div className="organization-switch-container">
+    <div className="team-switch-container">
       {error && (
         <Typography color="error" sx={{ mb: 2 }}>
           {error}
         </Typography>
       )}
 
-      {organizations.length > 0 || orgsLoading ? (
+      {teams.length > 0 || teamsLoading ? (
         <List sx={{ marginTop: 5 }}>
-          {organizations.map((org) => (
+          {teams.map((team) => (
             <ListItem
-              key={org.id}
+              key={team.id}
               disableGutters
               sx={{
-                opacity: loadingOrgId === org.id ? 0.7 : 1,
-                pointerEvents: loadingOrgId === org.id ? "none" : "auto",
+                opacity: loadingTeamId === team.id ? 0.7 : 1,
+                pointerEvents: loadingTeamId === team.id ? "none" : "auto",
               }}
             >
-              <ListItemText primary={org.name} />
+              <ListItemText primary={team.name} />
               <Button
                 variant="outlined"
                 color="primary"
-                onClick={() => handleOrgSwitch(org.id)}
-                disabled={loadingOrgId === org.id}
+                onClick={() => handleTeamSwitch(team.id)}
+                disabled={loadingTeamId === team.id}
                 endIcon={<TrendingFlat />}
               >
-                {loadingOrgId === org.id ? "Switching..." : "Switch"}
+                {loadingTeamId === team.id ? "Switching..." : "Switch"}
               </Button>
             </ListItem>
           ))}
         </List>
       ) : (
         <Typography variant="body2" color="textSecondary" sx={{ mt: 2 }}>
-          No organizations available.
+          No teams available.
         </Typography>
       )}
 
-      {loadingOrgId && (
+      {loadingTeamId && (
         <div
           style={{
             position: "fixed",

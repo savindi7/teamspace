@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Container, Typography } from '@mui/material';
 import AddTeamModal from './AddTeamModal';
-import TeamSwitch from './TeamSwitch';
+import TeamList from './TeamList';
 import { Organization } from "@/types/organization";
 
 const Teams: React.FC = () => {
@@ -16,7 +16,7 @@ const Teams: React.FC = () => {
           const data = await response.json();
           setTeams(data.organizations || []);
         } catch (error) {
-          console.error("Error fetching teams:", error);
+          console.error("Error fetching organizations:", error);
         } finally {
             setLoading(false);
             }
@@ -32,7 +32,7 @@ const Teams: React.FC = () => {
                 Teams
             </Typography>
             <AddTeamModal refreshTeams={fetchTeams} />
-            <TeamSwitch teams={teams} refreshTeams={fetchTeams} teamsLoading={loading} />
+            <TeamList teams={teams} teamsLoading={loading} />
         </Container>
     );
 };

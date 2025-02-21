@@ -6,24 +6,24 @@ import { Organization } from "@/types/organization";
 
 const Teams: React.FC = () => {
 
-    const [organizations, setOrganizations] = useState<Organization[]>([]);
+    const [teams, setTeams] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(false);
 
-    const fetchOrganizations = async () => {
+    const fetchTeams = async () => {
         setLoading(true);
         try {
           const response = await fetch("/api/organizations");
           const data = await response.json();
-          setOrganizations(data.organizations || []);
+          setTeams(data.organizations || []);
         } catch (error) {
-          console.error("Error fetching organizations:", error);
+          console.error("Error fetching teams:", error);
         } finally {
             setLoading(false);
             }
       };
     
       useEffect(() => {
-        fetchOrganizations();
+        fetchTeams();
       }, []);
 
     return (
@@ -31,8 +31,8 @@ const Teams: React.FC = () => {
             <Typography variant="h4" margin={3}>
                 Teams
             </Typography>
-            <AddTeamModal refreshTeams={fetchOrganizations} />
-            <TeamSwitch organizations={organizations} refreshTeams={fetchOrganizations} orgsLoading={loading} />
+            <AddTeamModal refreshTeams={fetchTeams} />
+            <TeamSwitch teams={teams} refreshTeams={fetchTeams} teamsLoading={loading} />
         </Container>
     );
 };

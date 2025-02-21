@@ -18,10 +18,10 @@ export async function POST(req: Request) {
   const orgId = orgExists?.data?.exists ? orgExists?.data?.id : (await createOrganization(accessToken, teamName, teamDescription, userId, session.user.email!)).id;
   const orgAccessToken = await switchOrganizationToken(accessToken, orgId);
 
-  const shadowAccountId = await getShadowAccountId(orgAccessToken.access_token, session?.user?.email as string);
-  const appId = await getAppId(orgAccessToken.access_token);
-  const roleId = await getRoleId(orgAccessToken.access_token, appId);
+  const shadowAccountId = await getShadowAccountId(orgAccessToken, session?.user?.email as string);
+  const appId = await getAppId(orgAccessToken);
+  const roleId = await getRoleId(orgAccessToken, appId);
 
-  const roleAssignment = await assignRole(orgAccessToken.access_token, roleId, shadowAccountId);
+  const roleAssignment = await assignRole(orgAccessToken, roleId, shadowAccountId);
   return Response.json({ message: "Team created successfully!", data: roleAssignment }, { status: 200 });
 }
