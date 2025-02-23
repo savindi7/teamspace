@@ -7,7 +7,7 @@ export async function GET() {
   try {
     // Get Application ID
     const getAppResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.ASGARDEO_BASE_URL}/o/api/server/v1/applications?filter=name%20eq%20${process.env.APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -25,7 +25,7 @@ export async function GET() {
 
     // Fetch roles
     const getRolesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/v2/Roles?filter=audience.value%20eq%20${appId}`,
+      `${process.env.ASGARDEO_BASE_URL}/o/scim2/v2/Roles?filter=audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {

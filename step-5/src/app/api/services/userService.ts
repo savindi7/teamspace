@@ -1,5 +1,5 @@
 export async function getUserId(accessToken: string): Promise<string> {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/Me`, {
+    const response = await fetch(`${process.env.ASGARDEO_BASE_URL}/scim2/Me`, {
       method: "GET",
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -18,7 +18,7 @@ export async function getUserId(accessToken: string): Promise<string> {
   
   export async function getShadowAccountId(accessToken: string, email: string): Promise<string> {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/Users?filter=userName%20eq%20${encodeURIComponent(email)}`,
+      `${process.env.ASGARDEO_BASE_URL}/o/scim2/Users?filter=userName%20eq%20${encodeURIComponent(email)}`,
       {
         method: "GET",
         headers: {

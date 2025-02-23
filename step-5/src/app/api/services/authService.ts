@@ -3,17 +3,17 @@ export async function switchOrganizationToken(
   orgId: string
 ): Promise<{ access_token: string; id_token: string }> {
   const authHeader = Buffer.from(
-    `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID}:${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET}`
+    `${process.env.AUTH_ASGARDEO_ID}:${process.env.AUTH_ASGARDEO_SECRET}`
   ).toString("base64");
 
   const params = new URLSearchParams();
   params.append("grant_type", "organization_switch");
   params.append("switching_organization", orgId);
   params.append("token", accessToken);
-  params.append("scope", process.env.NEXT_PUBLIC_AUTH_SCOPE!);
+  params.append("scope", process.env.AUTH_SCOPE!);
 
   const response = await fetch(
-    `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER}`,
+    `${process.env.AUTH_ASGARDEO_ISSUER}`,
     {
       method: "POST",
       headers: {

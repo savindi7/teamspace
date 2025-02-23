@@ -6,7 +6,7 @@ export async function GET() {
 
     try {
       const getUsersResponse = await fetch(
-        `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/o/scim2/Users`,
+        `${process.env.ASGARDEO_BASE_URL}/o/scim2/Users`,
         {
           method: "GET",
           headers: {

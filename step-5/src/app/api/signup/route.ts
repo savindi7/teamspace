@@ -32,7 +32,7 @@ export async function POST(req: Request) {
 
     // Create user in root organization
     const userResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/Users`,
+      `${process.env.ASGARDEO_BASE_URL}/scim2/Users`,
       {
         method: "POST",
         headers: {
@@ -58,7 +58,7 @@ export async function POST(req: Request) {
 
     // Get Application ID
     const getAppResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/api/server/v1/applications?filter=name%20eq%20${process.env.NEXT_PUBLIC_APP_NAME}`,
+      `${process.env.ASGARDEO_BASE_URL}/api/server/v1/applications?filter=name%20eq%20${process.env.APP_NAME}`,
       {
         method: "GET",
         headers: {
@@ -76,7 +76,7 @@ export async function POST(req: Request) {
 
     // Get Role ID
     const getRolesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.NEXT_PUBLIC_B2B_ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.ASGARDEO_BASE_URL}/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.B2B_ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {
@@ -100,7 +100,7 @@ export async function POST(req: Request) {
 
     // Assign Role to User
     const assignRoleResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/scim2/v2/Roles/${roleId}`,
+      `${process.env.ASGARDEO_BASE_URL}/scim2/v2/Roles/${roleId}`,
       {
         method: "PATCH",
         headers: {

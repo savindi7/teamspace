@@ -6,8 +6,8 @@ export async function POST() {
     const session = await auth();
 
     if (session) {
-      const logoutUrl = `${process.env.NEXT_PUBLIC_ASGARDEO_LOGOUT_URL}?id_token_hint=${
-        session.id_token}&post_logout_redirect_uri=${process.env.NEXT_PUBLIC_HOSTED_URL}`;
+      const logoutUrl = `${process.env.ASGARDEO_LOGOUT_URL}?id_token_hint=${
+        session.id_token}&post_logout_redirect_uri=${process.env.HOSTED_URL}`;
 
       return NextResponse.json({ logoutUrl });
     } else {

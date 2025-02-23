@@ -10,12 +10,10 @@ import { isSubOrg, getRootOrgName } from "@/app/auth-utils/orgUtils";
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
     Asgardeo({
-      clientId: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID,
-      clientSecret: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET,
-      issuer: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER,
+      issuer: process.env.AUTH_ASGARDEO_ISSUER,
       authorization: {
         params: {
-          scope: process.env.NEXT_PUBLIC_AUTH_SCOPE,
+          scope: process.env.AUTH_SCOPE,
         },
       },
     }),

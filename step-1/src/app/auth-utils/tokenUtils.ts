@@ -1,6 +1,6 @@
 export async function getCCGrantToken() {
   const tokenResponse = await fetch(
-    `${process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ISSUER}`,
+    `${process.env.AUTH_ASGARDEO_ISSUER}`,
     {
       method: "POST",
       headers: {
@@ -8,9 +8,9 @@ export async function getCCGrantToken() {
       },
       body: new URLSearchParams({
         grant_type: "client_credentials",
-        client_id: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_ID!,
-        client_secret: process.env.NEXT_PUBLIC_AUTH_ASGARDEO_SECRET!,
-        scope: process.env.NEXT_PUBLIC_AUTH_SCOPE!,
+        client_id: process.env.AUTH_ASGARDEO_ID!,
+        client_secret: process.env.AUTH_ASGARDEO_SECRET!,
+        scope: process.env.AUTH_SCOPE!,
       }).toString(),
     }
   );

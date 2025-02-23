@@ -1,6 +1,6 @@
 export async function checkOrganizationExists(accessToken: string, teamName: string) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/api/server/v1/organizations/check-name`,
+      `${process.env.ASGARDEO_BASE_URL}/api/server/v1/organizations/check-name`,
       {
         method: "POST",
         headers: {
@@ -20,7 +20,7 @@ export async function checkOrganizationExists(accessToken: string, teamName: str
   
   export async function createOrganization(accessToken: string, teamName: string, teamDescription: string, userId: string, userEmail: string) {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_ASGARDEO_BASE_URL}/api/server/v1/organizations`,
+      `${process.env.ASGARDEO_BASE_URL}/api/server/v1/organizations`,
       {
         method: "POST",
         headers: {
