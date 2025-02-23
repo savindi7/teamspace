@@ -1,4 +1,6 @@
 import { getCCGrantToken } from "@/app/auth-utils/tokenUtils";
+import { assignRole, getAppId, getRoleId } from "../services/roleService";
+import { createUser, getUser } from "../services/userService";
 
 export async function POST(req: Request) {
   try {
@@ -11,18 +13,8 @@ export async function POST(req: Request) {
       );
     }
 
-    let accessToken: string | undefined;
-
-    try {
-      const ccGrantToken = await getCCGrantToken();
-      accessToken = ccGrantToken?.access_token;
-    } catch (error) {
-      console.error(
-        "Error in getting token with client credentials grant type:",
-        error
-      );
-    }
-
+    const ccGrantToken = await getCCGrantToken();
+    const accessToken = ccGrantToken?.access_token;
     if (!accessToken) {
       return Response.json(
         { error: "Failed to obtain access token" },
@@ -30,129 +22,78 @@ export async function POST(req: Request) {
       );
     }
 
-    // Create user in root organization
-    const userResponse = await fetch(
-      `${process.env.ASGARDEO_BASE_URL}/scim2/Users`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          emails: [{ primary: true, value: email }],
-          name: { familyName: lastName, givenName: firstName },
-          password: password,
-          userName: `DEFAULT/${email}`,
-        }),
+    // Get App ID
+    const appId = await getAppId(accessToken);
+    if (!appId) {
+      return Response.json(
+        { error: "Failed to fetch application details" },
+        { status: 500 }
+      );
+    }
+
+    //Get Role ID
+    const roleId = await getRoleId(accessToken, appId);
+    if (!roleId) {
+      return Response.json(
+        { error: "Failed to fetch role details" },
+        { status: 500 }
+      );
+    }
+
+    // Check if the user already exists
+    const existingUser = await getUser(accessToken, email);
+    if (existingUser) {
+      const isAdmin = existingUser?.roles?.some(
+        (role: any) => role.display === process.env.B2B_ADMIN_ROLE_NAME
+      );
+
+      if (isAdmin) {
+        return Response.json(
+          { error: "User already exists." },
+          { status: 400 }
+        );
       }
-    );
 
-    if (!userResponse.ok) {
-      const errorText = await userResponse.text();
-      throw new Error(`User creation failed: ${errorText}`);
-    }
-
-    const userData = await userResponse.json();
-    const userId = userData?.id;
-
-    // Get Application ID
-    const getAppResponse = await fetch(
-      `${process.env.ASGARDEO_BASE_URL}/api/server/v1/applications?filter=name%20eq%20${process.env.APP_NAME}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-        },
-      }
-    );
-
-    if (!getAppResponse.ok) {
-      throw new Error(`HTTP error! Status: ${getAppResponse.status}`);
-    }
-
-    const data = await getAppResponse.json();
-    const appId = data?.applications[0]?.id;
-
-    // Get Role ID
-    const getRolesResponse = await fetch(
-      `${process.env.ASGARDEO_BASE_URL}/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.B2B_ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
-      {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-      }
-    );
-
-    if (!getRolesResponse.ok) {
-      throw new Error(`HTTP error! Status: ${getRolesResponse.status}`);
-    }
-
-    const rolesData = await getRolesResponse.json();
-
-    if (!rolesData?.Resources || rolesData.Resources.length === 0) {
-      throw new Error("Role not found");
-    }
-
-    const roleId = rolesData?.Resources[0]?.id;
-
-    // Assign Role to User
-    const assignRoleResponse = await fetch(
-      `${process.env.ASGARDEO_BASE_URL}/scim2/v2/Roles/${roleId}`,
-      {
-        method: "PATCH",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          Operations: [
-            {
-              op: "add",
-              path: "users",
-              value: [
-                {
-                  value: userId,
-                },
-              ],
-            },
-          ],
-        }),
-      }
-    );
-
-    if (!assignRoleResponse.ok) {
-      throw new Error(`HTTP error! Status: ${assignRoleResponse.status}`);
-    }
-
-    const assignRoleData = await assignRoleResponse.json();
-
-    return Response.json(
-      { message: "User registered successfully!", data: assignRoleData },
-      { status: 200 }
-    );
-  } catch (error: unknown) {
-    let errorMessage = "Signup failed";
-
-    if (error instanceof Error) {
-      const match = error.message.match(/\{.*\}/);
-      if (match) {
-        try {
-          const errorJson = JSON.parse(match[0]) as { detail?: string };
-          errorMessage = errorJson.detail || errorMessage;
-        } catch (parseError: unknown) {
-          console.error(
-            "Error parsing error message:",
-            parseError instanceof Error
-              ? parseError.message
-              : "Unknown parse error"
-          );
-        }
+      // Assign the role if the user exists
+      if (await assignRole(accessToken, roleId, existingUser.id)) {
+        return Response.json(
+          { message: "User role assigned successfully!" },
+          { status: 200 }
+        );
+      } else {
+        return Response.json(
+          { error: "Failed to assign role to existing user" },
+          { status: 500 }
+        );
       }
     }
 
-    return Response.json({ error: errorMessage }, { status: 500 });
+    // Create a new user
+    const userId = await createUser(
+      accessToken,
+      email,
+      firstName,
+      lastName,
+      password
+    );
+    if (!userId) {
+      return Response.json({ error: "User creation failed" }, { status: 500 });
+    }
+
+    // Assign role to new user
+    if (await assignRole(accessToken, roleId, userId)) {
+      return Response.json(
+        { message: "User registered successfully!" },
+        { status: 200 }
+      );
+    } else {
+      return Response.json(
+        { error: "Failed to assign role to new user" },
+        { status: 500 }
+      );
+    }
+  } catch (error) {
+    console.error("Signup error:", error);
+    return Response.json({ error: "Signup failed" }, { status: 500 });
   }
 }

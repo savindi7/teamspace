@@ -44,8 +44,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       return token;
     },
     async session({ session, token }) {
+
       if (token?.access_token) {
-        session.user = session.user || {};
+        session.user.email = token.email as string;
         session.user.access_token = token.access_token as string;
         session.id_token = token.id_token as string;
         session.user.firstName = parseJwt(session.id_token)["given_name"];
