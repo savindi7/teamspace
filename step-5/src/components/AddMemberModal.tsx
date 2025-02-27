@@ -1,11 +1,9 @@
 import { FormEvent, useEffect, useState } from "react";
-import { Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Select, MenuItem, Typography, CircularProgress } from "@mui/material";
+import { Box, Dialog, DialogActions, DialogContent, DialogTitle, Button, TextField, Select, MenuItem, Typography, CircularProgress } from "@mui/material";
 import { Add } from "@mui/icons-material";
 
 const AddMemberModal = () => {
     const [open, setOpen] = useState(false);
-    const [email, setEmail] = useState("");
-    const [role, setRole] = useState("");
     const [roles, setRoles] = useState<{ id: string; displayName: string }[]>([]);
     const [message, setMessage] = useState("");
     const [loading, setLoading] = useState(false);
@@ -33,6 +31,10 @@ const AddMemberModal = () => {
         e.preventDefault();
         setLoading(true);
         setMessage("");
+
+        const formData = new FormData(e.target as HTMLFormElement);
+        const email = formData.get("email") as string;
+        const role = formData.get("role") as string;
 
         try {
             const response = await fetch("/api/invite-member", {
@@ -62,20 +64,18 @@ const AddMemberModal = () => {
             </Button>
             <Dialog open={open} onClose={handleClose}>
                 <DialogTitle>Invite Member</DialogTitle>
-                <form onSubmit={handleInvite}>
+                <Box component="form" onSubmit={handleInvite}>
                     <DialogContent>
                         <TextField
                             type="email"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
+                            name="email"
                             label="User Email"
                             fullWidth
                             margin="normal"
                             required
                         />
                         <Select
-                            value={role}
-                            onChange={(e) => setRole(e.target.value)}
+                            name="role"
                             displayEmpty
                             fullWidth
                             margin="dense"
@@ -104,7 +104,7 @@ const AddMemberModal = () => {
                             {loading ? <CircularProgress size={24} /> : "Invite User"}
                         </Button>
                     </DialogActions>
-                </form>
+                </Box>
             </Dialog>
         </div>
     );

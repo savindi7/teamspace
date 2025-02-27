@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import {
+  Box,
   TextField,
   Button,
   Typography,
@@ -13,18 +14,20 @@ import {
 } from "@mui/material";
 
 const SignUp: React.FC = () => {
-  const [password, setPassword] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
   const [message, setMessage] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [open, setOpen] = useState<boolean>(false);
 
-  const handleSignUp = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  const handleSignUp = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
     setMessage("");
+
+    const formData = new FormData(e.target as HTMLFormElement);
+    const email = formData.get("email") as string;
+    const password = formData.get("password") as string;
+    const firstName = formData.get("firstName") as string;
+    const lastName = formData.get("lastName") as string;
 
     try {
       const response = await fetch("/api/signup", {
@@ -65,12 +68,12 @@ const SignUp: React.FC = () => {
       </Button>
       <Dialog open={open} onClose={handleClose}>
         <DialogTitle>Sign Up</DialogTitle>
+        <Box component="form" onSubmit={handleSignUp}>
         <DialogContent>
           <TextField
             type="email"
             label="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            name="email"
             required
             fullWidth
             margin="normal"
@@ -78,8 +81,7 @@ const SignUp: React.FC = () => {
           <TextField
             type="text"
             label="First Name"
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+            name="firstName"
             required
             fullWidth
             margin="normal"
@@ -87,8 +89,7 @@ const SignUp: React.FC = () => {
           <TextField
             type="text"
             label="Last Name"
-            value={lastName}
-            onChange={(e) => setLastName(e.target.value)}
+            name="lastName"
             required
             fullWidth
             margin="normal"
@@ -96,8 +97,7 @@ const SignUp: React.FC = () => {
           <TextField
             type="password"
             label="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            name="password"
             required
             fullWidth
             margin="normal"
@@ -113,14 +113,11 @@ const SignUp: React.FC = () => {
             color="primary"
             type="submit"
             disabled={loading}
-            onClick={(e) => {
-              e.preventDefault();
-              handleSignUp(e);
-            }}
           >
             {loading ? <CircularProgress size={24} /> : "Sign Up"}
           </Button>
         </DialogActions>
+        </Box>
       </Dialog>
     </div>
   );

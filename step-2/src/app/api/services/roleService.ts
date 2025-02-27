@@ -19,7 +19,7 @@ export async function getAppId(accessToken: string): Promise<string> {
   
   export async function getRoleId(accessToken: string, appId: string): Promise<string> {
     const response = await fetch(
-      `${process.env.ASGARDEO_BASE_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.B2B_ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
+      `${process.env.ASGARDEO_BASE_URL}/o/scim2/v2/Roles?filter=displayName%20eq%20${encodeURIComponent(process.env.ADMIN_ROLE_NAME!)}%20and%20audience.value%20eq%20${appId}`,
       {
         method: "GET",
         headers: {

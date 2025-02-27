@@ -14,13 +14,11 @@ import {
 } from "@mui/material";
 import Teams from "./Teams";
 import { signIn, useSession } from "next-auth/react";
-import { ArrowBack } from "@mui/icons-material";
 import Navbar from "./Navbar";
 
 export default function Home() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const { data: session, update, status } = useSession();
-  const [loading, setLoading] = useState(false);
+  const { data: session, status } = useSession();
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);

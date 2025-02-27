@@ -44,7 +44,7 @@ export async function POST(req: Request) {
     const existingUser = await getUser(accessToken, email);
     if (existingUser) {
       const isAdmin = existingUser?.roles?.some(
-        (role: any) => role.display === process.env.B2B_ADMIN_ROLE_NAME
+        (role: { display: string }) => role.display === process.env.ADMIN_ROLE_NAME
       );
 
       if (isAdmin) {
