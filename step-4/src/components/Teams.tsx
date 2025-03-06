@@ -3,11 +3,13 @@ import { Container, Typography } from '@mui/material';
 import AddTeamModal from './AddTeamModal';
 import TeamSwitch from './TeamSwitch';
 import { Organization } from "@/types/organization";
+import { useSession } from "next-auth/react";
 
 const Teams: React.FC = () => {
 
     const [teams, setTeams] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(false);
+    const { data: session } = useSession();
 
     const fetchTeams = async () => {
         setLoading(true);
@@ -31,7 +33,7 @@ const Teams: React.FC = () => {
             <Typography variant="h4" margin={3}>
                 Teams
             </Typography>
-            <AddTeamModal refreshTeams={fetchTeams} />
+            { session?.scopes?.includes("internal_organization_create") && <AddTeamModal refreshTeams={fetchTeams} />}
             <TeamSwitch teams={teams} refreshTeams={fetchTeams} teamsLoading={loading} />
         </Container>
     );

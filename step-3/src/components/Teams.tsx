@@ -3,11 +3,13 @@ import { Container, Typography } from '@mui/material';
 import AddTeamModal from './AddTeamModal';
 import TeamList from './TeamList';
 import { Organization } from "@/types/organization";
+import { useSession } from "next-auth/react";
 
 const Teams: React.FC = () => {
 
     const [teams, setTeams] = useState<Organization[]>([]);
     const [loading, setLoading] = useState(false);
+    const { data: session } = useSession();
 
     const fetchTeams = async () => {
         setLoading(true);
@@ -16,7 +18,7 @@ const Teams: React.FC = () => {
           const data = await response.json();
           setTeams(data.organizations || []);
         } catch (error) {
-          console.error("Error fetching organizations:", error);
+          console.error("Error fetching teams:", error);
         } finally {
             setLoading(false);
             }
@@ -31,7 +33,7 @@ const Teams: React.FC = () => {
             <Typography variant="h4" margin={3}>
                 Teams
             </Typography>
-            <AddTeamModal refreshTeams={fetchTeams} />
+            { session?.scopes?.includes("internal_organization_create") && <AddTeamModal refreshTeams={fetchTeams} />}
             <TeamList teams={teams} teamsLoading={loading} />
         </Container>
     );
